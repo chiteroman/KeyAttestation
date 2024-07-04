@@ -7,6 +7,7 @@ import io.github.vvb2060.keyattestation.attestation.Attestation.KM_SECURITY_LEVE
 import io.github.vvb2060.keyattestation.attestation.Attestation.KM_SECURITY_LEVEL_TRUSTED_ENVIRONMENT
 import io.github.vvb2060.keyattestation.attestation.AuthorizationList
 import io.github.vvb2060.keyattestation.attestation.CertificateInfo
+import io.github.vvb2060.keyattestation.attestation.CustomX509Certificate
 import io.github.vvb2060.keyattestation.databinding.HomeCommonItemBinding
 import rikka.core.res.resolveColorStateList
 import rikka.recyclerview.BaseViewHolder.Creator
@@ -165,7 +166,7 @@ open class CommonItemViewHolder<T>(itemView: View, binding: HomeCommonItemBindin
                     }
 
                     val sb = StringBuilder()
-                    val cert = data.cert
+                    val cert = CustomX509Certificate(data.cert)
                     val res = context.resources
                     sb.append(res.getString(R.string.cert_subject))
                             .append(cert.subjectDN)

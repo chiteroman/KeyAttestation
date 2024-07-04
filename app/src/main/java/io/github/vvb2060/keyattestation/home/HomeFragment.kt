@@ -150,6 +150,10 @@ class HomeFragment : AppFragment(), HomeAdapter.Listener, MenuProvider {
     }
 
     override fun onPrepareMenu(menu: Menu) {
+        menu.findItem(R.id.menu_secret_mode).apply {
+            isVisible = true
+            isChecked = viewModel.secretMode
+        }
         menu.findItem(R.id.menu_use_strongbox).apply {
             isVisible = viewModel.hasStrongBox
             isChecked = viewModel.preferStrongBox
@@ -171,6 +175,12 @@ class HomeFragment : AppFragment(), HomeAdapter.Listener, MenuProvider {
 
     override fun onMenuItemSelected(item: MenuItem): Boolean {
         when (item.itemId) {
+            R.id.menu_secret_mode -> {
+                val status = !item.isChecked
+                item.isChecked = status
+                viewModel.secretMode = status
+                viewModel.load()
+            }
             R.id.menu_use_strongbox -> {
                 val status = !item.isChecked
                 item.isChecked = status

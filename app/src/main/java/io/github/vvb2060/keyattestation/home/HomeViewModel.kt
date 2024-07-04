@@ -53,9 +53,15 @@ class HomeViewModel(pm: PackageManager, private val sp: SharedPreferences) : Vie
     val attestationResult = MutableLiveData<Resource<AttestationResult>>()
     var currentCerts: List<X509Certificate>? = null
 
+    var secretMode = sp.getBoolean("secret_mode", true)
+        set(value) {
+            field = value
+            sp.edit { putBoolean("secret_mode", value) }
+        }
+
     val hasStrongBox = Build.VERSION.SDK_INT >= Build.VERSION_CODES.P &&
             pm.hasSystemFeature(PackageManager.FEATURE_STRONGBOX_KEYSTORE)
-    var preferStrongBox = sp.getBoolean("prefer_strongbox", true)
+    var preferStrongBox = sp.getBoolean("prefer_strongbox", false)
         set(value) {
             field = value
             sp.edit { putBoolean("prefer_strongbox", value) }
@@ -63,7 +69,7 @@ class HomeViewModel(pm: PackageManager, private val sp: SharedPreferences) : Vie
 
     val hasAttestKey = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S &&
             pm.hasSystemFeature(PackageManager.FEATURE_KEYSTORE_APP_ATTEST_KEY)
-    var preferAttestKey = sp.getBoolean("prefer_attest_key", true)
+    var preferAttestKey = sp.getBoolean("prefer_attest_key", false)
         set(value) {
             field = value
             sp.edit { putBoolean("prefer_attest_key", value) }
@@ -71,7 +77,7 @@ class HomeViewModel(pm: PackageManager, private val sp: SharedPreferences) : Vie
 
     val hasDeviceIds = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S &&
             pm.hasSystemFeature("android.software.device_id_attestation")
-    var preferIncludeProps = sp.getBoolean("prefer_including_props", true)
+    var preferIncludeProps = sp.getBoolean("prefer_including_props", false)
         set(value) {
             field = value
             sp.edit { putBoolean("prefer_including_props", value) }

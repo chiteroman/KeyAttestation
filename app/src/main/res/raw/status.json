@@ -392,14 +392,6 @@
       "status": "REVOKED",
       "reason": "KEY_COMPROMISE"
     },
-    "14e38b3979edef06d0e95b7131a08b22" : {
-      "status": "REVOKED",
-      "reason": "KEY_COMPROMISE"
-    },
-    "c2272cf25f9ccac5b5633a36b5e08fa9" : {
-      "status": "REVOKED",
-      "reason": "KEY_COMPROMISE"
-    },
     "4507699620177564323": {
       "status": "REVOKED",
       "reason": "KEY_COMPROMISE"
