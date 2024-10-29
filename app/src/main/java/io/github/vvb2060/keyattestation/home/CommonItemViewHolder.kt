@@ -61,6 +61,9 @@ open class CommonItemViewHolder<T>(itemView: View, binding: HomeCommonItemBindin
                     binding.apply {
                         title.setText(data.title)
                         if (!data.data.isNullOrBlank()) {
+                            if (data.data!!.contains("verifiedBootHash: ")) {
+                                btnCopy.isVisible = true
+                            }
                             summary.text = data.data
                             text1.setText(if (data.tee) R.string.tee_enforced else R.string.sw_enforced)
                             text1.isVisible = true

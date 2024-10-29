@@ -3,6 +3,7 @@
     <string name="app_name">金鑰認證</string>
     <string name="use_strongbox">使用 StrongBox</string>
     <string name="attest_device_props">認證裝置屬性</string>
+    <string name="copy_vbhash">複製 verified boot hash</string>
     <string name="about">關於</string>
     <string name="open_source_info"><![CDATA[
 此軟體是 %2$s 下的開源軟體（%1$s）。

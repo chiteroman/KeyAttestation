@@ -3,55 +3,102 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@android:id/content"
     style="@style/HomeCardStyle"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
     android:background="?android:selectableItemBackground"
     android:gravity="center_vertical"
-    android:orientation="horizontal">
+    android:orientation="vertical">
 
     <LinearLayout
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_marginEnd="16dp"
-        android:layout_weight="1"
-        android:orientation="vertical">
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:baselineAligned="false"
+        android:gravity="center_vertical"
+        android:orientation="horizontal">
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="16dp"
+            android:layout_weight="1"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/title"
+                style="@style/HomeItemTitleText"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                tools:text="title" />
+
+            <TextView
+                android:id="@+id/summary"
+                style="@style/HomeItemSummaryText"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                tools:text="summary" />
+
+        </LinearLayout>
+
+        <ImageView
+            android:id="@+id/icon"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="-4dp"
+            android:background="?android:selectableItemBackgroundBorderless"
+            android:importantForAccessibility="no"
+            android:padding="4dp"
+            android:tintMode="src_in"
+            tools:src="@drawable/ic_trustworthy_24"
+            tools:tint="?colorSafe" />
 
         <TextView
-            android:id="@+id/title"
-            style="@style/HomeItemTitleText"
-            android:layout_width="match_parent"
+            android:id="@+id/text1"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            tools:text="title" />
-
-        <TextView
-            android:id="@+id/summary"
-            style="@style/HomeItemSummaryText"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            tools:text="summary" />
+            android:background="@null"
+            android:fontFamily="sans-serif"
+            android:letterSpacing="0"
+            android:minWidth="0dp"
+            android:textColor="?colorAccent"
+            android:textStyle="bold"
+            tools:text="SW" />
 
     </LinearLayout>
 
-    <ImageView
-        android:id="@+id/icon"
+    <LinearLayout
+        android:id="@+id/btnCopy"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginStart="-4dp"
-        android:background="?android:selectableItemBackgroundBorderless"
-        android:importantForAccessibility="no"
-        android:padding="4dp"
-        android:tintMode="src_in"
-        tools:src="@drawable/ic_trustworthy_24"
-        tools:tint="?colorSafe" />
+        android:layout_marginTop="8dp"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:visibility="gone">
 
-    <TextView
-        android:id="@+id/text1"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:background="@null"
-        android:fontFamily="sans-serif"
-        android:letterSpacing="0"
-        android:minWidth="0dp"
-        android:textColor="?colorAccent"
-        android:textStyle="bold"
-        tools:text="SW" />
+        <ImageView
+            android:id="@+id/imgCopy"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="3dp"
+            android:layout_marginRight="3dp"
+            android:layout_weight="1"
+            android:background="@null"
+            android:contentDescription="@string/copy_vbhash"
+            android:src="?attr/actionModeCopyDrawable" />
+
+        <TextView
+            android:id="@+id/textCopy"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:background="@null"
+            android:fontFamily="sans-serif"
+            android:letterSpacing="0"
+            android:minWidth="0dp"
+            android:text="@string/copy_vbhash"
+            android:textAllCaps="true"
+            android:textColor="?colorAccent"
+            android:textStyle="bold" />
+
+    </LinearLayout>
 
 </LinearLayout>

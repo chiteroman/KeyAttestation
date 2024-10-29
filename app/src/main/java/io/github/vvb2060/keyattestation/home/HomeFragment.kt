@@ -1,6 +1,8 @@
 package io.github.vvb2060.keyattestation.home
 
 import android.app.Dialog
+import android.content.ClipData
+import android.content.ClipboardManager
 import android.content.Context
 import android.os.Build
 import android.os.Bundle
@@ -13,12 +15,14 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.TextView
+import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts.CreateDocument
 import androidx.activity.result.contract.ActivityResultContracts.OpenDocument
 import androidx.appcompat.app.AlertDialog
 import androidx.core.view.MenuHost
 import androidx.core.view.MenuProvider
 import androidx.core.view.isVisible
+import com.google.common.io.BaseEncoding
 import io.github.vvb2060.keyattestation.AppApplication
 import io.github.vvb2060.keyattestation.BuildConfig
 import io.github.vvb2060.keyattestation.R
@@ -57,6 +61,18 @@ class HomeFragment : AppFragment(), HomeAdapter.Listener, MenuProvider {
 
     private val adapter by lazy {
         HomeAdapter(this)
+    }
+
+    private fun copyVerifiedBootHash(context: Context) {
+        val rootOfTrust = viewModel.getRootOfTrust()
+        if (rootOfTrust != null) {
+            val verifiedBootHash = BaseEncoding.base16().encode(rootOfTrust.verifiedBootHash).lowercase()
+            val clipboardManager =
+                context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+            clipboardManager.setPrimaryClip(ClipData.newPlainText("hash", verifiedBootHash))
+            if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.S_V2)
+                Toast.makeText(context, "Copied: ${verifiedBootHash}", Toast.LENGTH_SHORT).show()
+        }
     }
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
@@ -141,6 +157,10 @@ class HomeFragment : AppFragment(), HomeAdapter.Listener, MenuProvider {
     override fun onAuthorizationItemDataClick(data: AuthorizationItemData) {
         val context = requireContext()
 
+        if (!data.data.isNullOrBlank() && data.data.contains("verifiedBootHash: ")) {
+            copyVerifiedBootHash(context)
+        }
+
         val message = if (!data.data.isNullOrBlank()) "${context.getString(data.description)}<p>* ${context.getString(if (data.tee) R.string.tee_enforced_description else R.string.sw_enforced_description)}"
                 .toHtml(HtmlCompat.FROM_HTML_OPTION_TRIM_WHITESPACE)
         else
@@ -216,6 +236,10 @@ class HomeFragment : AppFragment(), HomeAdapter.Listener, MenuProvider {
                 item.isChecked = status
                 viewModel.preferIncludeProps = status
                 viewModel.load()
+            }
+            R.id.menu_copy_vbhash -> {
+                val context = requireContext()
+                copyVerifiedBootHash(context)
             }
             R.id.menu_reset -> {
                 viewModel.load(true)
