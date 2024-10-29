@@ -22,6 +22,7 @@ import com.samsung.android.security.keystore.AttestationUtils
 import io.github.vvb2060.keyattestation.AppApplication
 import io.github.vvb2060.keyattestation.attestation.AttestationResult
 import io.github.vvb2060.keyattestation.attestation.CertificateInfo.parseCertificateChain
+import io.github.vvb2060.keyattestation.attestation.RootOfTrust
 import io.github.vvb2060.keyattestation.lang.AttestationException
 import io.github.vvb2060.keyattestation.lang.AttestationException.Companion.CODE_CANT_PARSE_CERT
 import io.github.vvb2060.keyattestation.lang.AttestationException.Companion.CODE_DEVICEIDS_UNAVAILABLE
@@ -294,5 +295,20 @@ class HomeViewModel(pm: PackageManager, private val sp: SharedPreferences) : Vie
         }
 
         attestationResult.postValue(result)
+    }
+
+    fun getRootOfTrust(): RootOfTrust? {
+        val useSAK = hasSAK && preferSAK
+        val useStrongBox = hasStrongBox && preferStrongBox
+        val includeProps = hasDeviceIds && preferIncludeProps
+        val useAttestKey = hasAttestKey && preferAttestKey && !useSAK
+        try {
+            val attestationResult = doAttestation(useSAK, useStrongBox, includeProps, useAttestKey)
+            return attestationResult.rootOfTrust
+        } catch (e: Throwable) {
+            val cause = if (e is AttestationException) e.cause else e
+            Log.w(AppApplication.TAG, "Do attestation error.", cause)
+        }
+        return null
     }
 }

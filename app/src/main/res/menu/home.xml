@@ -34,6 +34,11 @@
         android:title="@string/attest_device_props" />
 
     <item
+        android:id="@+id/menu_copy_vbhash"
+        android:showAsAction="never"
+        android:title="@string/copy_vbhash" />
+
+    <item
         android:id="@+id/menu_reset"
         android:showAsAction="never"
         android:title="@string/reset" />

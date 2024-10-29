@@ -4,6 +4,7 @@
     <string name="use_strongbox">Usar StrongBox</string>
     <string name="use_attest_key">Usar chave de atestado gerada pelo app</string>
     <string name="attest_device_props">Atestar props do dispositivo</string>
+    <string name="copy_vbhash">Copiar verified boot hash</string>
     <string name="reset">Redefinir</string>
     <string name="load_certs">Carregar do arquivo</string>
     <string name="save_certs">Salvar em arquivo</string>
