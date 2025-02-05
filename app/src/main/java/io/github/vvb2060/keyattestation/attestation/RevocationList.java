@@ -1,6 +1,13 @@
 package io.github.vvb2060.keyattestation.attestation;
 
+import android.content.Context;
+import android.net.ConnectivityManager;
+import android.net.Network;
+import android.net.NetworkCapabilities;
 import android.os.Build;
+import android.util.Log;
+
+import androidx.annotation.NonNull;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -9,8 +16,9 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.math.BigInteger;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.nio.charset.StandardCharsets;
-import java.util.Locale;
 
 import io.github.vvb2060.keyattestation.AppApplication;
 import io.github.vvb2060.keyattestation.R;
@@ -31,52 +39,91 @@ public record RevocationList(String status, String reason) {
         }
     }
 
-    private static JSONObject parseStatus(InputStream inputStream) throws IOException {
-        try {
-            var statusListJson = new JSONObject(toString(inputStream));
-            return statusListJson.getJSONObject("entries");
-        } catch (JSONException e) {
-            throw new IOException(e);
-        }
-    }
-
     private static JSONObject getStatus() {
-        var statusUrl = "https://android.googleapis.com/attestation/status";
-        var resName = "android:string/vendor_required_attestation_revocation_list_url";
-        var res = AppApplication.app.getResources();
-        // noinspection DiscouragedApi
-        var id = res.getIdentifier(resName, null, null);
-        if (id != 0) {
-            var url = res.getString(id);
-            if (!statusUrl.equals(url) && url.toLowerCase(Locale.ROOT).startsWith("https")) {
-                // no network permission, waiting for user report
-                throw new RuntimeException("unknown status url: " + url);
+        if (isConnectedToInternet()) {
+            HttpURLConnection connection = null;
+            try {
+                connection = getHttpURLConnection();
+
+                if (connection == null)
+                    throw new Exception();
+
+                String str = toString(connection.getInputStream());
+
+                return new JSONObject(str);
+
+            } catch (Throwable t) {
+                Log.e(AppApplication.TAG, "getStatus [remote]", t);
+            } finally {
+                if (connection != null) {
+                    connection.disconnect();
+                }
             }
         }
-        try (var input = res.openRawResource(R.raw.status)) {
-            return parseStatus(input);
-        } catch (IOException e) {
-            throw new RuntimeException("Failed to parse certificate revocation status", e);
+
+        try (InputStream inputStream = AppApplication.app.getResources().openRawResource(R.raw.status)) {
+            return new JSONObject(toString(inputStream));
+        } catch (Throwable t) {
+            Log.e(AppApplication.TAG, "getStatus [local]", t);
         }
+
+        return new JSONObject();
     }
 
     public static RevocationList get(BigInteger serialNumber) {
         String serialNumberString = serialNumber.toString(16).toLowerCase();
-        JSONObject revocationStatus;
         try {
-            revocationStatus = data.getJSONObject(serialNumberString);
+            JSONObject entries = data.getJSONObject("entries");
+            JSONObject revocationEntry = entries.optJSONObject(serialNumberString);
+
+            if (revocationEntry == null)
+                return null;
+
+            return new RevocationList(
+                    revocationEntry.getString("status"),
+                    revocationEntry.getString("reason")
+            );
         } catch (JSONException e) {
-            return null;
+            Log.e(AppApplication.TAG, "Error parsing JSON entries", e);
         }
-        try {
-            var status = revocationStatus.getString("status");
-            var reason = revocationStatus.getString("reason");
-            return new RevocationList(status, reason);
-        } catch (JSONException e) {
-            return new RevocationList("", "");
-        }
+        return null;
     }
 
+    private static HttpURLConnection getHttpURLConnection() {
+        try {
+            URL url = new URL("https://android.googleapis.com/attestation/status");
+            HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+
+            connection.setUseCaches(false);
+            connection.setDefaultUseCaches(false);
+
+            connection.setRequestMethod("GET");
+            connection.setRequestProperty("Cache-Control", "max-age=0, no-cache, no-store, must-revalidate");
+            connection.setRequestProperty("Pragma", "no-cache");
+            connection.setRequestProperty("Expires", "0");
+
+            return connection;
+        } catch (Throwable t) {
+            Log.e(AppApplication.TAG, "getHttpURLConnection", t);
+        }
+        return null;
+    }
+
+    private static boolean isConnectedToInternet() {
+        ConnectivityManager connectivityManager = (ConnectivityManager) AppApplication.app.getSystemService(Context.CONNECTIVITY_SERVICE);
+        if (connectivityManager == null) return false;
+
+        Network network = connectivityManager.getActiveNetwork();
+        if (network == null) return false;
+
+        NetworkCapabilities capabilities = connectivityManager.getNetworkCapabilities(network);
+        return capabilities != null &&
+                (capabilities.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) ||
+                        capabilities.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR) ||
+                        capabilities.hasTransport(NetworkCapabilities.TRANSPORT_ETHERNET));
+    }
+
+    @NonNull
     @Override
     public String toString() {
         return "status is " + status + ", reason is " + reason;
