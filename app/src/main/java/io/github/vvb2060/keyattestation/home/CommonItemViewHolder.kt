@@ -1,8 +1,11 @@
 package io.github.vvb2060.keyattestation.home
 
+import android.content.ClipData
+import android.content.ClipboardManager
 import android.content.Context
 import android.util.Pair
 import android.view.View
+import android.widget.Toast
 import androidx.core.view.isVisible
 import io.github.vvb2060.keyattestation.AppApplication
 import io.github.vvb2060.keyattestation.R
@@ -94,6 +97,27 @@ open class CommonItemViewHolder<T>(itemView: View, binding: HomeCommonItemBindin
                 init {
                     this.binding.apply {
                         root.setOnClickListener {
+                            if (data.data.contains("verifiedBootHash:")) {
+                                val lines = data.data.lines()
+                                for (line in lines) {
+                                    if (line.startsWith("verifiedBootHash:")) {
+                                        val verifiedBootHash = line.substringAfter(":").trim()
+                                        val clipboardManager =
+                                            context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+                                        clipboardManager.setPrimaryClip(
+                                            ClipData.newPlainText(
+                                                "verifiedBootHash",
+                                                verifiedBootHash
+                                            )
+                                        )
+                                        Toast.makeText(
+                                            context,
+                                            "Copied verifiedBootHash to clipboard!",
+                                            Toast.LENGTH_SHORT
+                                        ).show()
+                                    }
+                                }
+                            }
                             listener.onCommonDataClick(data)
                         }
                         icon.isVisible = false
