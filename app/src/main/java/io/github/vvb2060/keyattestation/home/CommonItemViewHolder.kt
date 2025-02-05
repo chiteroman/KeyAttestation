@@ -1,8 +1,10 @@
 package io.github.vvb2060.keyattestation.home
 
+import android.content.Context
 import android.util.Pair
 import android.view.View
 import androidx.core.view.isVisible
+import io.github.vvb2060.keyattestation.AppApplication
 import io.github.vvb2060.keyattestation.R
 import io.github.vvb2060.keyattestation.attestation.Attestation.KM_SECURITY_LEVEL_STRONG_BOX
 import io.github.vvb2060.keyattestation.attestation.Attestation.KM_SECURITY_LEVEL_TRUSTED_ENVIRONMENT
@@ -11,6 +13,9 @@ import io.github.vvb2060.keyattestation.attestation.CertificateInfo
 import io.github.vvb2060.keyattestation.attestation.RootPublicKey
 import io.github.vvb2060.keyattestation.databinding.HomeCommonItemBinding
 import rikka.core.res.resolveColorStateList
+import rikka.recyclerview.BaseViewHolder.Creator
+import java.util.Date
+import javax.security.auth.x500.X500Principal
 
 open class CommonItemViewHolder<T>(itemView: View, binding: HomeCommonItemBinding) :
     HomeViewHolder<T, HomeCommonItemBinding>(itemView, binding) {
@@ -135,11 +140,13 @@ open class CommonItemViewHolder<T>(itemView: View, binding: HomeCommonItemBindin
                             iconRes = R.drawable.ic_trustworthy_24
                             colorAttr = rikka.material.R.attr.colorSafe
                         }
+
                         KM_SECURITY_LEVEL_STRONG_BOX -> {
                             securityLevel = R.string.security_level_strongbox
                             iconRes = R.drawable.ic_trustworthy_24
                             colorAttr = rikka.material.R.attr.colorSafe
                         }
+
                         else -> {
                             securityLevel = R.string.security_level_software
                             iconRes = R.drawable.ic_untrustworthy_24
@@ -149,7 +156,11 @@ open class CommonItemViewHolder<T>(itemView: View, binding: HomeCommonItemBindin
 
                     binding.apply {
                         title.setText(data.title)
-                        summary.text = context.getString(R.string.attestation_summary_format, data.version, context.getString(securityLevel))
+                        summary.text = context.getString(
+                            R.string.attestation_summary_format,
+                            data.version,
+                            context.getString(securityLevel)
+                        )
                         icon.setImageDrawable(context.getDrawable(iconRes))
                         icon.imageTintList = context.theme.resolveColorStateList(colorAttr)
                     }
@@ -205,17 +216,33 @@ open class CommonItemViewHolder<T>(itemView: View, binding: HomeCommonItemBindin
                         colorAttr?.let { imageTintList = context.theme.resolveColorStateList(it) }
                     }
 
+                    val secretMode =
+                        AppApplication.app.getSharedPreferences("settings", Context.MODE_PRIVATE)
+                            .getBoolean("secret_mode", true)
+
                     val sb = StringBuilder()
                     val cert = data.cert
                     val res = context.resources
                     sb.append(res.getString(R.string.cert_subject))
-                            .append(cert.subjectDN)
-                            .append("\n")
-                            .append(res.getString(R.string.cert_not_before))
-                            .append(AuthorizationList.formatDate(cert.notBefore))
-                            .append("\n")
-                            .append(res.getString(R.string.cert_not_after))
-                            .append(AuthorizationList.formatDate(cert.notAfter))
+                    if (secretMode) {
+                        sb.append(X500Principal("SERIALNUMBER=HIDDEN,T=TEE"))
+                    } else {
+                        sb.append(cert.subjectDN)
+                    }
+                    sb.append("\n")
+                        .append(res.getString(R.string.cert_not_before))
+                    if (secretMode) {
+                        sb.append(Date(0))
+                    } else {
+                        sb.append(AuthorizationList.formatDate(cert.notBefore))
+                    }
+                    sb.append("\n")
+                        .append(res.getString(R.string.cert_not_after))
+                    if (secretMode) {
+                        sb.append(Date())
+                    } else {
+                        sb.append(AuthorizationList.formatDate(cert.notAfter))
+                    }
 
                     data.provisioningInfo?.apply {
                         certsIssued?.let {
@@ -238,7 +265,7 @@ open class CommonItemViewHolder<T>(itemView: View, binding: HomeCommonItemBindin
                     }
                     if (resId != null) {
                         sb.append("\n").append(res.getString(resId))
-                                .append(data.securityException.message)
+                            .append(data.securityException.message)
                     }
                     binding.summary.text = sb.toString()
                 }

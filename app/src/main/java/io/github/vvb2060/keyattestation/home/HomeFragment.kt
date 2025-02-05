@@ -4,7 +4,12 @@ import android.app.Dialog
 import android.os.Build
 import android.os.Bundle
 import android.text.method.LinkMovementMethod
-import android.view.*
+import android.view.LayoutInflater
+import android.view.Menu
+import android.view.MenuInflater
+import android.view.MenuItem
+import android.view.View
+import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.activity.result.contract.ActivityResultContracts.CreateDocument
@@ -39,9 +44,10 @@ class HomeFragment : AppFragment(), HomeAdapter.Listener, MenuProvider {
 
     private val viewModel: HomeViewModel by viewModels { HomeViewModel.Factory }
 
-    private val save = registerForActivityResult(CreateDocument("application/x-pkcs7-certificates")) {
-        viewModel.save(it)
-    }
+    private val save =
+        registerForActivityResult(CreateDocument("application/x-pkcs7-certificates")) {
+            viewModel.save(it)
+        }
 
     private val load = registerForActivityResult(GetContent()) {
         viewModel.load(it)
@@ -55,7 +61,11 @@ class HomeFragment : AppFragment(), HomeAdapter.Listener, MenuProvider {
         HomeAdapter(this)
     }
 
-    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
+    override fun onCreateView(
+        inflater: LayoutInflater,
+        container: ViewGroup?,
+        savedInstanceState: Bundle?
+    ): View {
         _binding = HomeBinding.inflate(inflater, container, false)
         return binding.root
     }
@@ -71,7 +81,10 @@ class HomeFragment : AppFragment(), HomeAdapter.Listener, MenuProvider {
 
         val context = view.context
 
-        binding.list.borderVisibilityChangedListener = BorderView.OnBorderVisibilityChangedListener { top: Boolean, _: Boolean, _: Boolean, _: Boolean -> appActivity?.appBar?.setRaised(!top) }
+        binding.list.borderVisibilityChangedListener =
+            BorderView.OnBorderVisibilityChangedListener { top: Boolean, _: Boolean, _: Boolean, _: Boolean ->
+                appActivity?.appBar?.setRaised(!top)
+            }
         binding.list.layoutManager = LinearLayoutManager(context)
         binding.list.adapter = adapter
         binding.list.addItemDecoration(HomeItemDecoration(context))
@@ -83,11 +96,13 @@ class HomeFragment : AppFragment(), HomeAdapter.Listener, MenuProvider {
                     binding.list.isVisible = true
                     adapter.updateData(res.data!!)
                 }
+
                 Status.ERROR -> {
                     binding.progress.isVisible = false
                     binding.list.isVisible = true
                     adapter.updateData(res.error as AttestationException)
                 }
+
                 Status.LOADING -> {
                     binding.progress.isVisible = true
                     binding.list.isVisible = false
@@ -134,6 +149,11 @@ class HomeFragment : AppFragment(), HomeAdapter.Listener, MenuProvider {
     }
 
     override fun onPrepareMenu(menu: Menu) {
+        menu.findItem(R.id.menu_secret_mode).apply {
+            isVisible = true
+            isChecked = viewModel.secretMode
+        }
+
         menu.findItem(R.id.menu_use_shizuku).apply {
             isVisible = Shizuku.pingBinder()
             val received = KeyStoreManager.getRemoteKeyStore() != null
@@ -199,60 +219,80 @@ class HomeFragment : AppFragment(), HomeAdapter.Listener, MenuProvider {
         val status = !item.isChecked
         item.isChecked = status
         when (item.itemId) {
+            R.id.menu_secret_mode -> {
+                viewModel.secretMode = status
+                viewModel.load()
+            }
+
             R.id.menu_use_shizuku -> {
                 viewModel.preferShizuku = status
                 viewModel.load()
             }
+
             R.id.menu_use_sak -> {
                 viewModel.preferSak = status
                 viewModel.load()
             }
+
             R.id.menu_use_strongbox -> {
                 viewModel.preferStrongBox = status
                 viewModel.load()
             }
+
             R.id.menu_use_attest_key -> {
                 viewModel.preferAttestKey = status
                 viewModel.load()
             }
+
             R.id.menu_include_props -> {
                 viewModel.preferIncludeProps = status
                 viewModel.load()
             }
+
             R.id.menu_id_type_serial -> {
                 viewModel.preferIdAttestationSerial = status
                 viewModel.load()
             }
+
             R.id.menu_id_type_imei -> {
                 viewModel.preferIdAttestationIMEI = status
                 viewModel.load()
             }
+
             R.id.menu_id_type_meid -> {
                 viewModel.preferIdAttestationMEID = status
                 viewModel.load()
             }
+
             R.id.menu_include_unique_id -> {
                 viewModel.preferIncludeUniqueId = status
                 viewModel.load()
             }
+
             R.id.menu_rkp_test -> {
                 viewModel.rkp()
             }
+
             R.id.menu_reset -> {
                 viewModel.load(true)
             }
+
             R.id.menu_save -> {
                 save.launch("${Build.PRODUCT}-${AppApplication.TAG}.p7b")
             }
+
             R.id.menu_load -> {
                 load.launch("*/*")
             }
+
             R.id.menu_import_attest_key -> {
                 import.launch("text/xml")
             }
+
             R.id.menu_about -> {
                 showAboutDialog()
             }
+
             else -> return false
         }
         return true
@@ -264,7 +304,13 @@ class HomeFragment : AppFragment(), HomeAdapter.Listener, MenuProvider {
         val source = "<b><a href=\"${context.getString(R.string.github_url)}\">GitHub</a></b>"
         val shizuku = "<b><a href=\"${context.getString(R.string.shizuku_url)}\">Web</a></b>"
         text.append(BuildConfig.VERSION_NAME).append("<p>")
-        text.append(getString(R.string.open_source_info, source, context.getString(R.string.license)))
+        text.append(
+            getString(
+                R.string.open_source_info,
+                source,
+                context.getString(R.string.license)
+            )
+        )
         if (Shizuku.pingBinder()) {
             KeyStoreManager.requestPermission()
         } else if (KeyStoreManager.isShizukuInstalled()) {
@@ -276,11 +322,12 @@ class HomeFragment : AppFragment(), HomeAdapter.Listener, MenuProvider {
         text.append("<p>").append(context.getString(R.string.copyright))
         val icon = context.getDrawable(R.drawable.ic_launcher)
         val dialog: Dialog = AlertDialog.Builder(context)
-                .setView(rikka.material.R.layout.dialog_about)
-                .show()
+            .setView(rikka.material.R.layout.dialog_about)
+            .show()
         dialog.findViewById<TextView>(rikka.material.R.id.design_about_info).isVisible = false
         dialog.findViewById<ImageView>(rikka.material.R.id.design_about_icon).setImageDrawable(icon)
-        dialog.findViewById<TextView>(rikka.material.R.id.design_about_title).text = getString(R.string.app_name)
+        dialog.findViewById<TextView>(rikka.material.R.id.design_about_title).text =
+            getString(R.string.app_name)
         dialog.findViewById<TextView>(rikka.material.R.id.design_about_version).apply {
             movementMethod = LinkMovementMethod.getInstance()
             this.text = text.toHtml(HtmlCompat.FROM_HTML_OPTION_TRIM_WHITESPACE)

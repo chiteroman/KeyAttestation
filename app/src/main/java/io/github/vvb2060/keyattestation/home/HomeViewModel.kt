@@ -26,9 +26,9 @@ import io.github.vvb2060.keyattestation.util.Resource
 import rikka.shizuku.Shizuku
 
 class HomeViewModel(
-        pm: PackageManager,
-        private val cr: ContentResolver,
-        private val sp: SharedPreferences,
+    pm: PackageManager,
+    private val cr: ContentResolver,
+    private val sp: SharedPreferences,
 ) : ViewModel() {
     companion object {
         val Factory: ViewModelProvider.Factory = viewModelFactory {
@@ -43,9 +43,15 @@ class HomeViewModel(
     private val attestationRepository = AttestationRepository()
     private val attestationData = MutableLiveData<Resource<BaseData>>()
 
+    var secretMode = sp.getBoolean("secret_mode", true)
+        set(value) {
+            field = value
+            sp.edit { putBoolean("secret_mode", value) }
+        }
+
     val hasStrongBox = Build.VERSION.SDK_INT >= Build.VERSION_CODES.P &&
             pm.hasSystemFeature(PackageManager.FEATURE_STRONGBOX_KEYSTORE)
-    var preferStrongBox = sp.getBoolean("prefer_strongbox", true)
+    var preferStrongBox = sp.getBoolean("prefer_strongbox", false)
         set(value) {
             field = value
             sp.edit { putBoolean("prefer_strongbox", value) }
@@ -53,7 +59,7 @@ class HomeViewModel(
 
     val hasAttestKey = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S &&
             pm.hasSystemFeature(PackageManager.FEATURE_KEYSTORE_APP_ATTEST_KEY)
-    var preferAttestKey = sp.getBoolean("prefer_attest_key", true)
+    var preferAttestKey = sp.getBoolean("prefer_attest_key", false)
         set(value) {
             field = value
             sp.edit { putBoolean("prefer_attest_key", value) }
@@ -61,7 +67,7 @@ class HomeViewModel(
 
     val hasDeviceIds = Build.VERSION.SDK_INT >= Build.VERSION_CODES.P &&
             pm.hasSystemFeature("android.software.device_id_attestation")
-    var preferIncludeProps = sp.getBoolean("prefer_include_props", true)
+    var preferIncludeProps = sp.getBoolean("prefer_include_props", false)
         set(value) {
             field = value
             sp.edit { putBoolean("prefer_include_props", value) }
@@ -87,7 +93,7 @@ class HomeViewModel(
         }
 
     val hasMEID = pm.hasSystemFeature(PackageManager.FEATURE_TELEPHONY_CDMA)
-    var preferIdAttestationMEID = sp.getBoolean("prefer_id_attestation_MEID", true)
+    var preferIdAttestationMEID = sp.getBoolean("prefer_id_attestation_MEID", false)
         set(value) {
             field = value
             sp.edit { putBoolean("prefer_id_attestation_MEID", value) }
@@ -179,8 +185,10 @@ class HomeViewModel(
             useSak = hasSak && canSak && preferSak
             if (hasDeviceIds) {
                 if (preferIdAttestationSerial) idFlags = DevicePolicyManager.ID_TYPE_SERIAL
-                if (hasIMEI && preferIdAttestationIMEI) idFlags = idFlags or DevicePolicyManager.ID_TYPE_IMEI
-                if (hasMEID && preferIdAttestationMEID) idFlags = idFlags or DevicePolicyManager.ID_TYPE_MEID
+                if (hasIMEI && preferIdAttestationIMEI) idFlags =
+                    idFlags or DevicePolicyManager.ID_TYPE_IMEI
+                if (hasMEID && preferIdAttestationMEID) idFlags =
+                    idFlags or DevicePolicyManager.ID_TYPE_MEID
             }
         }
         val useAttestKey = hasAttestKey && preferAttestKey && !useSak
@@ -189,8 +197,10 @@ class HomeViewModel(
                 Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
 
 
-        val result = attestationRepository.attest(reset, useAttestKey, useStrongBox,
-                includeProps, uniqueIdIncluded, idFlags, useSak)
+        val result = attestationRepository.attest(
+            reset, useAttestKey, useStrongBox,
+            includeProps, uniqueIdIncluded, idFlags, useSak
+        )
 
         attestationData.postValue(result)
     }
