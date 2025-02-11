@@ -19,23 +19,25 @@ import java.math.BigInteger;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
+import java.util.Random;
 
 import io.github.vvb2060.keyattestation.AppApplication;
 import io.github.vvb2060.keyattestation.R;
 
 public record RevocationList(String status, String reason) {
     private static final JSONObject data = getStatus();
+    private static final Random random = new Random();
 
     private static String toString(InputStream input) throws IOException {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             return new String(input.readAllBytes(), StandardCharsets.UTF_8);
         } else {
-            var output = new ByteArrayOutputStream(8192);
-            var buffer = new byte[8192];
+            ByteArrayOutputStream output = new ByteArrayOutputStream(8192);
+            byte[] buffer = new byte[8192];
             for (int length; (length = input.read(buffer)) != -1; ) {
                 output.write(buffer, 0, length);
             }
-            return output.toString();
+            return output.toString(StandardCharsets.UTF_8.name());
         }
     }
 
@@ -44,20 +46,15 @@ public record RevocationList(String status, String reason) {
             HttpURLConnection connection = null;
             try {
                 connection = getHttpURLConnection();
-
-                if (connection == null)
-                    throw new Exception();
+                if (connection == null) throw new Exception();
 
                 String str = toString(connection.getInputStream());
-
                 return new JSONObject(str);
 
             } catch (Throwable t) {
                 Log.e(AppApplication.TAG, "getStatus [remote]", t);
             } finally {
-                if (connection != null) {
-                    connection.disconnect();
-                }
+                if (connection != null) connection.disconnect();
             }
         }
 
@@ -76,8 +73,7 @@ public record RevocationList(String status, String reason) {
             JSONObject entries = data.getJSONObject("entries");
             JSONObject revocationEntry = entries.optJSONObject(serialNumberString);
 
-            if (revocationEntry == null)
-                return null;
+            if (revocationEntry == null) return null;
 
             return new RevocationList(
                     revocationEntry.getString("status"),
@@ -91,16 +87,19 @@ public record RevocationList(String status, String reason) {
 
     private static HttpURLConnection getHttpURLConnection() {
         try {
-            URL url = new URL("https://android.googleapis.com/attestation/status");
-            HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+            String timestamp = String.valueOf(System.currentTimeMillis());
+            String randomParam = String.valueOf(random.nextInt(1000));
+            URL url = new URL("https://android.googleapis.com/attestation/status?ts=" + timestamp + "&rnd=" + randomParam);
 
+            HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+            
             connection.setUseCaches(false);
             connection.setDefaultUseCaches(false);
-
             connection.setRequestMethod("GET");
-            connection.setRequestProperty("Cache-Control", "max-age=0, no-cache, no-store, must-revalidate");
+            connection.setRequestProperty("Cache-Control", "no-cache, no-store, must-revalidate");
             connection.setRequestProperty("Pragma", "no-cache");
             connection.setRequestProperty("Expires", "0");
+            connection.setRequestProperty("User-Agent", "AttestationChecker/1.0 (Android " + Build.VERSION.RELEASE + ")");
 
             return connection;
         } catch (Throwable t) {
