@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Key Attestation</string>
+    <string name="secret_mode">Μυστική Λειτουργία</string>
     <string name="use_shizuku">Χρήση Shizuku</string>
     <string name="use_sak">Χρήση βεβαίωσης Knox</string>
     <string name="use_strongbox">Χρήση StrongBox</string>
